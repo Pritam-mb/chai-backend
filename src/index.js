@@ -1,12 +1,27 @@
 // Load environment variables
 import dotenv from "dotenv";
 dotenv.config({ path: "../.env" }); // important since .env is outside /src
-
+// const a = require(FileSystem)
 // Import dependencies
 import mongoose from "mongoose";
 import { DB_NAME } from "./constants.js";
 import connectDB from "./db/index.js";
-connectDB();
+connectDB()
+.then(()=>{
+    app.listen(process.env.PORT || 8000, () => {
+        console.log(`🚀 Server running on port ${process.env.PORT || 8000}`);
+      });
+})
+.catch((err) => {
+  console.error("❌ MongoDB connection error:", err.message);
+  throw err;
+});
+
+
+
+
+
+
 // import express from "express";
 
 // // Initialize express app
