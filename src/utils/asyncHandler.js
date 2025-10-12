@@ -1,3 +1,5 @@
+//// wrapper that is used to handle async errors in express routes
+
 const asyncHandler = (func)=> async (req,res,next)=>{   // next is used to pass the error to the next middleware
     try {
         await func(req,res,next)
