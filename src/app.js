@@ -24,4 +24,10 @@ app.use(express.static("public"));
 app.use(cookieParser()); // for parsing cookies from request headers
 
 // middlewires are used to handle queries and req like if u hit any ones post of insta then it will check for the token in the cookies and then it will allow u to see that post
+import userouter from "./routes/user.route.js"
+
+//routes
+app.use("/users",userouter)
+// http://localhost:4000/users/register
+
 export default app;

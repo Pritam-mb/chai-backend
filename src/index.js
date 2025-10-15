@@ -6,6 +6,7 @@ dotenv.config({ path: "../.env" }); // important since .env is outside /src
 import mongoose from "mongoose";
 import { DB_NAME } from "./constants.js";
 import connectDB from "./db/index.js";
+import app from "./app.js";
 connectDB()
 .then(()=>{
     app.listen(process.env.PORT || 8000, () => {
