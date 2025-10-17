@@ -27,7 +27,8 @@ app.use(cookieParser()); // for parsing cookies from request headers
 import userouter from "./routes/user.route.js"
 
 //routes
-app.use("/users",userouter)
+app.use("/users",userouter) // when u hit this route it will go to user.route.js
+// then it will go to user.controller.js or register function
 // http://localhost:4000/users/register
 
 export default app;
