@@ -4,8 +4,12 @@ import apierror from "../utils/apierror.js";
 import {User} from "../models/user.model.js"
 import {uploadCloudinary} from "../utils/cloudinary.js"
 import { apiresponse } from "../utils/apiresponse.js";
+import { upload } from "../middlewares/multer.middlewire.js";
 // import {fullname, email } from "../models/user.model.js"
 const register = asyncHandler(async (req, res) => {
+    console.log("BODY:", req.body);
+console.log("FILES:", req.files);
+
     // get details from user
     //validation - not empty
     //check if user already exist : username email
@@ -29,29 +33,33 @@ const register = asyncHandler(async (req, res) => {
    }
 
 
-   const existuser = User.findOne({ //check user exist
+   const existuser = await User.findOne({ //check user exist
     $or: [{username},{email}]
    })
    if (existuser) {
     throw new apierror("arey bhadwa tuu hai lekin tujko pata nhi hai",409)
    }
    
-     const avatarlocal= req.files?.avater[0]?.path //check if avatar exist
-     const coverlocal= req.files?.coverImage[0]?.path; //it actually get the file path which multer  returns the img url
-    if(!(avatarlocal)){
+     const avatarlocal= req.files?.avatar[0]?.path //check if avatar exist
+    //  const coverlocal= req.files?.coverImage[0]?.path; //it actually get the file path which multer  returns the img url
+    let coverlocal;
+    if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
+        coverlocal = req.files.coverImage[0].path
+    }
+     if(!(avatarlocal)){
         throw new apierror("avatar dal jaldi",400)
     }
-    const avatar = await uploadCloudinary(avatarlocal) //upload cloudinary
+    const avatarfile = await uploadCloudinary(avatarlocal) //upload cloudinary
     const coverfile = await uploadCloudinary(coverlocal)
 
-    if(!avatar){
+    if(!avatarfile){
             throw new apierror("avatar dal jaldi",400)
 
     }
    const user = await User.create({  //create a user 
         fullname,
-        avatar: avatar.url,
-        coverImage: coverImage?.url || "",//cloudnary gives full object we just want url
+        avatar: avatarfile.url,
+        coverImage: coverfile?.url || "",//cloudnary gives full object we just want url
         email,
         password,
         username: username.toLowerCase()
