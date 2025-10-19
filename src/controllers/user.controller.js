@@ -3,6 +3,7 @@ import {asyncHandler} from "../utils/asyncHandler.js"
 import apierror from "../utils/apierror.js";
 import {User} from "../models/user.model.js"
 import {uploadCloudinary} from "../utils/cloudinary.js"
+import { apiresponse } from "../utils/apiresponse.js";
 // import {fullname, email } from "../models/user.model.js"
 const register = asyncHandler(async (req, res) => {
     // get details from user
@@ -47,13 +48,23 @@ const register = asyncHandler(async (req, res) => {
             throw new apierror("avatar dal jaldi",400)
 
     }
-    User.create({
+   const user = await User.create({  //create a user 
         fullname,
         avatar: avatar.url,
-        coverImage: coverImage?.url || "",
+        coverImage: coverImage?.url || "",//cloudnary gives full object we just want url
         email,
         password,
-        username: username.toLowercase()
+        username: username.toLowerCase()
     })
+    const createuser = await User.findById(user._id).select("-password -refreshToken") // thsi is final of user
+
+    if(!createuser){
+        throw new apierror("something went wrong",500)
+    }
+
+    return res.status(201).json(
+        new apiresponse("successfully created", 202 , createuser)
+    )
 })
+
 export { register }
