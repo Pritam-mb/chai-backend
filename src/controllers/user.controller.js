@@ -26,16 +26,16 @@ const register = asyncHandler(async (req, res) => {
     if (!emailRegex.test(email)) {
     throw new apierror("Invalid email format", 400);
    }
-   const existuser = User.findOne({
+
+
+   const existuser = User.findOne({ //check user exist
     $or: [{username},{email}]
    })
    if (existuser) {
     throw new apierror("arey bhadwa tuu hai lekin tujko pata nhi hai",409)
    }
-    console.log(
-        
-    );
-     const avatarlocal= req.files?.avater[0]?.path 
+   
+     const avatarlocal= req.files?.avater[0]?.path //check if avatar exist
      const coverlocal= req.files?.coverImage[0]?.path; //it actually get the file path which multer  returns the img url
     if(!(avatarlocal)){
         throw new apierror("avatar dal jaldi",400)
@@ -47,5 +47,13 @@ const register = asyncHandler(async (req, res) => {
             throw new apierror("avatar dal jaldi",400)
 
     }
+    User.create({
+        fullname,
+        avatar: avatar.url,
+        coverImage: coverImage?.url || "",
+        email,
+        password,
+        username: username.toLowercase()
+    })
 })
 export { register }
