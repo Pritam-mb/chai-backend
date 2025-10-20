@@ -76,7 +76,7 @@ userSchema.methods.generateAccessToken = function(){  // for generating token
         expiresIn: process.env.ACCESS_TOKEN_EXPIRY || "1d"
     })
 }
-userSchema.methods.generateRefreshToken = function(){
+userSchema.methods.generateRefreshToken = function(){ //longlived
      return jwt.sign({
         _id : this._id,
        },
