@@ -5,10 +5,25 @@ import {User} from "../models/user.model.js"
 import {uploadCloudinary} from "../utils/cloudinary.js"
 import { apiresponse } from "../utils/apiresponse.js";
 import { upload } from "../middlewares/multer.middlewire.js";
+
+const generatetokens = async(userid)=>{
+    try {
+        const user = User.findById(userid)
+        const accesstoken = user.generateAccessToken()
+        const refreshtoken = user.generateRefreshToken()
+
+        user.refreshtoken = refreshtoken // store refresh token in db   
+      await   user.save({validateBeforeSave: false}) // we dont want to validate other fields while saving refresh token
+        return {accesstoken, refreshtoken}
+    } catch (error) {
+        throw new apierror("somethingw went wrong",500)
+        
+    }
+}
 // import {fullname, email } from "../models/user.model.js"
 const register = asyncHandler(async (req, res) => {
     console.log("BODY:", req.body);
-console.log("FILES:", req.files);
+    console.log("FILES:", req.files);
 
     // get details from user
     //validation - not empty
@@ -75,4 +90,53 @@ console.log("FILES:", req.files);
     )
 })
 
-export { register }
+const loginuser = asyncHandler(async (req,res)=>{
+            //req body
+            //username or email
+            //find the user
+            //password check
+
+            //access and refresh token
+            //send cookie
+            //response
+
+            const {email,password,username} = req.body
+
+            if(!username || !email){
+                throw new apierror("email or username provide pls",400)
+            }
+            const user = await User.findOne(
+              {  $or: [{email},{username}]
+            })
+
+            if(!user){
+                throw new apierror("user not exist ", 409)
+            }
+            
+            const ispasswordvalid = await user.ispasswordCorrect(password)
+            if(!ispasswordvalid){
+                throw new apierror("password incorrect",401)
+            }
+
+         const {accesstoken,refreshtoken} = await  generatetokens(user._id)
+            // here when we take user it doesnt have refresh token  so we need to fetch again bec it is empty
+       
+            const loggedinuser = await User.findById(user._id).select("-password -refreshtoken") //here we are fetching the user again to get the refresh token
+            const options ={ 
+                httpOnly: true,
+                secure: true
+            }
+            //cookiies are basically stored data like refresh token which help browser to remember if u logged in or not for short term
+            return res.status(200)
+            .cookie("refreshToken", refreshtoken, options) // we are storing refresh token in cookie so that it is not accessible from frontend
+            .cookie("accessToken", accesstoken, options)
+            .json(
+                new apiresponse("successfully logged in",200,{
+                    user: loggedinuser,
+                    accesstoken,refreshtoken
+                })
+            )
+})
+const logoutuser = asyncHandler(async (req,res)=>{})
+
+export { register, loginuser }
