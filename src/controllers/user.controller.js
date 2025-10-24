@@ -2,6 +2,7 @@ import { request, response } from "express"
 import {asyncHandler} from "../utils/asyncHandler.js"
 import apierror from "../utils/apierror.js";
 import {User} from "../models/user.model.js"
+import jwt from "jsonwebtoken"
 import {uploadCloudinary} from "../utils/cloudinary.js"
 import { apiresponse } from "../utils/apiresponse.js";
 import { upload } from "../middlewares/multer.middlewire.js";
@@ -174,4 +175,43 @@ const logoutuser = asyncHandler(async (req,res)=>{
             .json(new apiresponse("user logged out",200,{}))
 })
 
-export { register, loginuser,logoutuser }
+const refreshAcessToken = asyncHandler(async(req,res)=>{
+    const incomingtoken = await req.cookies?.refreshToken || req.header("Authorization")?.replace("Bearer ","")
+
+    if(!incomingtoken){
+        throw new apierror("doesnt get cookies",401)
+    }
+
+   try {
+    const decodetoken = jwt.verify(incomingtoken,
+         process.env.REFRESH_TOKEN_SECRET
+     )
+     // if(! decodetoken){
+     //     throw new apierror("invalid user",402)
+     // }
+    const user =await User.findById(decodetoken?._id)
+    if(!user){
+     throw new apierror("user not exist",401)
+    }
+    if( incomingtoken !== user?.refreshToken){
+     throw new apierror("session expired",403)
+    }
+     const options ={ 
+                 httpOnly: true, // not accessible from frontend js
+                 secure: true
+             }
+    const {accesstoken,refreshtoken}=await generatetokens(user._id)
+    res.status(200)
+    .cookie("accessToken",accesstoken,options)
+    .cookie("refreshToken",refreshtoken,options)
+    .json(
+     new apiresponse(200,{ accesstoken,refreshtoken},
+         "cookies restored"
+     )
+    )
+   } catch (error) {
+    throw new apierror("genaratoke generating failed",404)
+   }
+})
+
+export { register, loginuser,logoutuser,refreshAcessToken }
