@@ -1,7 +1,61 @@
-import mongoose,{Schema} from "mongoose";
 // import { use } from "react";
+import mongoose,{Schema} from "mongoose";
 import jwt from "jsonwebtoken" // for generating token
 import bcrypt from "bcrypt"  // for hashing password or encrypting password
+const userSchema = new Schema({
+    username:{
+        type: String,
+        required: true,
+        unique: true,
+        lowercase: true,
+        trim: true,
+        index: true  // for optimise searching techniqs
+    }
+    ,
+     email:{
+        type: String,
+        required: true,
+        unique: true,
+        lowercase: true,
+        trim: true,
+        // index: true  // for optimise searching techniqs
+    },
+     fullname:{
+        type: String,
+        required: true,
+        // unique: true,
+        // lowercase: true,
+        trim: true,
+        index: true  // for optimise searching techniqs
+    },
+    avatar:{
+        type: String,
+        required: true
+    },
+    coverImage:{
+        type: String,
+        // required: true 
+    },
+    watchHistory:[
+        {
+            type: Schema.Types.ObjectId,
+            ref: "Videos"
+        }
+    ],
+    password:{
+        type: String,
+        required: [true, 'password is required']
+
+    },
+    refreshToken:{
+        type: String
+    }
+
+
+},{
+    timestamps:true
+})
+
  
 //encrypt password before storing
 userSchema.pre("save", async function (next) {  // next is just passing the control to next function
@@ -31,4 +85,4 @@ userSchema.methods.generateRefreshToken = function(){ //longlived
         expiresIn: process.env.REFRESH_TOKEN_EXPIRY || "10d"
     })
 }
-export const User = mongoose.model("User",userSchema)
+export const User = mongoose.model("Users",userSchema)

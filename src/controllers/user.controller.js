@@ -123,7 +123,7 @@ const loginuser = asyncHandler(async (req,res)=>{
        
             const loggedinuser = await User.findById(user._id).select("-password -refreshtoken") //here we are fetching the user again to get the refresh token
             const options ={ 
-                httpOnly: true,
+                httpOnly: true, // not accessible from frontend js
                 secure: true
             }
             //cookiies are basically stored data like refresh token which help browser to remember if u logged in or not for short term
@@ -137,6 +137,30 @@ const loginuser = asyncHandler(async (req,res)=>{
                 })
             )
 })
-const logoutuser = asyncHandler(async (req,res)=>{})
+const logoutuser = asyncHandler(async (req,res)=>{
+    // clear cookies
+       // here the user came from auth middlewire where we del the tokens from user
+   await User.findByIdAndUpdate(
+        req.user._id,
+        {
 
-export { register, loginuser }
+            $set: {
+                refreshtoken: undefined
+            },
+        },
+            {
+                new: true
+            }
+        
+    )
+      const options ={ 
+                httpOnly: true, // not accessible from frontend js
+                secure: true
+            }
+            return res.status(200)
+            .clearCookie("accesstoken",options)
+            .clearCookie("refreshtoken",options)
+            .json(new apiresponse("user logged out",200,{}))
+})
+
+export { register, loginuser,logoutuser }

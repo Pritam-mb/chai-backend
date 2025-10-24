@@ -1,6 +1,7 @@
 import { Router } from "express";
-import { register } from "../controllers/user.controller.js";
+import { loginuser, logoutuser, register } from "../controllers/user.controller.js";
 import { upload} from "../middlewares/multer.middlewire.js"
+import { verifyjwt } from "../middlewares/auth.middlewire.js";
 const router = Router();
 router.route("/register").post(
     upload.fields([   //middlewire which take avater and coverimage file
@@ -13,4 +14,10 @@ router.route("/register").post(
         }
     ]),
     register)
+
+router.route("/login").post(loginuser)
+
+
+//secure routes
+router.route("/logout").post(verifyjwt, logoutuser)
 export default router;
