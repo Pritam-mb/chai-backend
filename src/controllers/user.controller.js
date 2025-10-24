@@ -5,21 +5,32 @@ import {User} from "../models/user.model.js"
 import {uploadCloudinary} from "../utils/cloudinary.js"
 import { apiresponse } from "../utils/apiresponse.js";
 import { upload } from "../middlewares/multer.middlewire.js";
+const generatetokens = async (userid) => {
+  try {
+    console.log("🟩 Generating tokens for user:", userid);
 
-const generatetokens = async(userid)=>{
-    try {
-        const user = User.findById(userid)
-        const accesstoken = user.generateAccessToken()
-        const refreshtoken = user.generateRefreshToken()
-
-        user.refreshtoken = refreshtoken // store refresh token in db   
-      await   user.save({validateBeforeSave: false}) // we dont want to validate other fields while saving refresh token
-        return {accesstoken, refreshtoken}
-    } catch (error) {
-        throw new apierror("somethingw went wrong",500)
-        
+    const user = await User.findById(userid);
+    if (!user) {
+      console.log("❌ No user found for ID:", userid);
+      throw new apierror("User not found", 404);
     }
-}
+
+    console.log("✅ User found:", user.email);
+
+    const accesstoken = user.generateAccessToken();
+    const refreshtoken = user.generateRefreshToken();
+
+    user.refreshtoken = refreshtoken;
+    await user.save({ validateBeforeSave: false });
+
+    console.log("✅ Tokens generated successfully");
+    return { accesstoken, refreshtoken };
+  } catch (error) {
+    console.error("❌ Token generation error:", error);
+    throw new apierror("something went wrong", 500);
+  }
+};
+
 // import {fullname, email } from "../models/user.model.js"
 const register = asyncHandler(async (req, res) => {
     console.log("BODY:", req.body);
@@ -102,7 +113,7 @@ const loginuser = asyncHandler(async (req,res)=>{
 
             const {email,password,username} = req.body
 
-            if(!username || !email){
+            if(!(username || email)){
                 throw new apierror("email or username provide pls",400)
             }
             const user = await User.findOne(
@@ -145,7 +156,7 @@ const logoutuser = asyncHandler(async (req,res)=>{
         {
 
             $set: {
-                refreshtoken: undefined
+                refreshToken: undefined
             },
         },
             {
@@ -158,8 +169,8 @@ const logoutuser = asyncHandler(async (req,res)=>{
                 secure: true
             }
             return res.status(200)
-            .clearCookie("accesstoken",options)
-            .clearCookie("refreshtoken",options)
+            .clearCookie("accessToken",options)
+            .clearCookie("refreshToken",options)
             .json(new apiresponse("user logged out",200,{}))
 })
 
