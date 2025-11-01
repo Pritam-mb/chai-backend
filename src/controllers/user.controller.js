@@ -175,6 +175,8 @@ const logoutuser = asyncHandler(async (req,res)=>{
             .json(new apiresponse("user logged out",200,{}))
 })
 
+
+// generate new access token using refresh token because access token has short life span
 const refreshAcessToken = asyncHandler(async(req,res)=>{
     const incomingtoken = await req.cookies?.refreshToken || req.header("Authorization")?.replace("Bearer ","")
 
@@ -182,14 +184,14 @@ const refreshAcessToken = asyncHandler(async(req,res)=>{
         throw new apierror("doesnt get cookies",401)
     }
 
-   try {
+   try { // verify token
     const decodetoken = jwt.verify(incomingtoken,
          process.env.REFRESH_TOKEN_SECRET
      )
      // if(! decodetoken){
      //     throw new apierror("invalid user",402)
      
-    const user =await User.findById(decodetoken?._id)
+    const user =await User.findById(decodetoken?._id) // id from mongo 
     if(!user){
      throw new apierror("user not exist",401)
     }
