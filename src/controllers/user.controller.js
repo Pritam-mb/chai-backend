@@ -202,7 +202,7 @@ const refreshAcessToken = asyncHandler(async(req,res)=>{
                  httpOnly: true, // not accessible from frontend js
                  secure: true
              }
-    const {accesstoken,refreshtoken}=await generatetokens(user._id)
+    const {accesstoken,refreshtoken} = await generatetokens(user._id)
     res.status(200)
     .cookie("accessToken",accesstoken,options)
     .cookie("refreshToken",refreshtoken,options)
