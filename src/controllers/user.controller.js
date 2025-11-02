@@ -149,6 +149,7 @@ const loginuser = asyncHandler(async (req,res)=>{
                 })
             )
 })
+
 const logoutuser = asyncHandler(async (req,res)=>{
     // clear cookies
        // here the user came from auth middlewire where we del the tokens from user
@@ -216,4 +217,115 @@ const refreshAcessToken = asyncHandler(async(req,res)=>{
    }
 })
 
-export { register, loginuser,logoutuser,refreshAcessToken }
+const changepassword = asyncHandler(async(req,res)=>{
+    const {oldpassword , newpassword , confirmpassword} = req.body  // here the old password means the current password of user 
+    
+    const user = await User.findById(req.user._id)    // before it we call verify jwt which verify the by taking his cookies and then it store all the user details in req.user.. so we can find id from req.user
+   const iscorrect = await user.ispasswordCorrect(oldpassword)
+
+   if(!iscorrect){
+    throw new apierror("old password incorrect",400)
+   }
+    if(newpassword !== confirmpassword){
+        throw new apierror("password doesnt match",400)
+    }
+
+    user.password = newpassword  // we are directly assigning new password to user password bec we have pre save hook in user model which will hash the password before saving
+   
+    await user.save({ validateBeforeSave: false}) // here we are skipping the validation bec we are only changing the password not other details
+   return res.status(200)
+   .json(
+    new apiresponse("password changed successfully",200,{})
+   )
+
+})
+
+const getcurrentuser = asyncHandler(async(req,res)=>{
+    return res.statur(200)
+    .json(
+        new apiresponse("current user fetched",200, req.user)
+    )
+})
+
+const updateuser = asyncHandler(async(req,res)=>{
+    const {fullname,username,email} = req.body
+    if(! (fullname || username || email)){
+        throw new apierror("provide atleast one field to update",400)
+    }
+    const user = await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $set:{
+                fullname: fullname || req.user.fullname,
+                username: username || req.user.username,
+                email: email || req.user.email
+            }
+        },
+            {new: true}
+        
+    ).select("-paasword")
+    res.status(200).json(
+        new apiresponse("user updated successfully",200,user)
+    )
+
+})
+
+const avatarupdate = asyncHandler(async (req,res)=>{
+    const avatarlocal= req.file?.path //check if avatar exist
+    if(!(avatarlocal)){
+       throw new apierror("avatar nahi hai tera",400)
+   }
+   const avatarfile = await uploadCloudinary(avatarlocal)
+     if(!avatarfile.url){
+           throw new apierror("avatar dal jaldi",400)
+        }
+   
+           const user = await User.findByIdAndUpdate(
+            req.user._id,
+            {
+                $set:{
+                    avatar : avatarfile.url
+                }
+            },
+        { new: true }
+           ).select("-password")
+        // const user = await User.findById(req.user._id)
+        // user.avatar = avatarfile.url
+         
+          
+    // await user.save({ validateBeforeSave: false})
+            return res.status(200).json(    
+        new apiresponse("avatar updated successfully",200,user)
+    )
+})
+
+
+const coverimgupdate = asyncHandler(async (req,res)=>{
+    const avatarlocal= req.file?.path //check if avatar exist
+    if(!(avatarlocal)){
+       throw new apierror("coverimg nahi hai tera",400)
+   }
+   const avatarfile = await uploadCloudinary(avatarlocal)
+     if(!avatarfile.url){
+           throw new apierror("avatar dal jaldi",400)
+        }
+   
+           const user = await User.findByIdAndUpdate(
+            req.user._id,
+            {
+                $set:{
+                    coverImage : avatarfile.url
+                }
+            },
+        { new: true }
+           ).select("-password")
+        // const user = await User.findById(req.user._id)
+        // user.avatar = avatarfile.url
+    // await user.save({ validateBeforeSave: false})
+    return res.status(200).json(
+        new apiresponse("cover image updated successfully",200,user)
+    )
+
+})
+
+export { register, loginuser,logoutuser,refreshAcessToken,changepassword ,getcurrentuser,updateuser, avatarupdate,coverimgupdate}
