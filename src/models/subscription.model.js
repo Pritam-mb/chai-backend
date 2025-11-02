@@ -9,7 +9,6 @@ const subscriptionSchema = new Schema({
     channel:{
         type: Schema.Types.ObjectId, //owner of channel
         ref: "User",
-        
     }
 })
 
