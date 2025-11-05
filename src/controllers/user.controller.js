@@ -328,4 +328,63 @@ const coverimgupdate = asyncHandler(async (req,res)=>{
 
 })
 
-export { register, loginuser,logoutuser,refreshAcessToken,changepassword ,getcurrentuser,updateuser, avatarupdate,coverimgupdate}
+const getuserchannelprofile = asyncHandler(async(req,res)=>{
+    const {username} = req.params
+    if(!username){
+        throw new apierror("invalid username",400)
+    }
+    const channel = await User.aggregate([ // aggregate is used to perform complex queries here we are using lookup to join subscription collection with user collection to get the subscribers of the channel 
+      {  $match: {
+            username: username.toLowerCase() // to make it case insensitive
+        }
+    },
+        {
+            $lookup :{
+                from: "subscriptions", // collection name in db
+                localField: "_id", // user collection field
+                foreignField: "channel", // subscription collection field
+                as: "subscribers"  
+
+            }
+        },
+        {
+            $lookup:{
+              from: "subscriptions", // collection name in db
+                localField: "_id", // user collection field
+                foreignField: "subscriber", // subscription collection field
+                as: "subscribedchannels"   
+            }
+        },{
+            $addFields:{
+                subscriberscount: {
+                    $size: "$subscribers" // size of array
+                },
+                subscribedchannelscount: {
+                    $size: "$subscribedchannels"
+                },
+                issubscribed:{
+                    $cond:{
+                        if:{ $in:[ "req.user._id","$subscribers.subscriber"]}, // check if the logged in user is in the subscribers array
+                        then: true,
+                        else: false
+                    }
+                },
+            }
+        },{
+                    $project:{
+                        fullname:1,
+                        username:1,
+                        email:1,
+                        avatar:1,
+                        coverImage:1,
+                        subscriberscount:1,
+                        subscribedchannelscount:1,
+                        issubscribed:1
+                    }
+                
+            
+             }
+    ])
+})
+
+export { register, loginuser,logoutuser,refreshAcessToken,changepassword ,getcurrentuser,updateuser, avatarupdate,coverimgupdate,getuserchannelprofile}
