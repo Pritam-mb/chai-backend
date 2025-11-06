@@ -6,6 +6,7 @@ import jwt from "jsonwebtoken"
 import {uploadCloudinary} from "../utils/cloudinary.js"
 import { apiresponse } from "../utils/apiresponse.js";
 import { upload } from "../middlewares/multer.middlewire.js";
+import mongoose from "mongoose";
 const generatetokens = async (userid) => {
   try {
     console.log("🟩 Generating tokens for user:", userid);
@@ -340,10 +341,10 @@ const getuserchannelprofile = asyncHandler(async(req,res)=>{
     },
         {
             $lookup :{
-                from: "subscriptions", // collection name in db
-                localField: "_id", // user collection field
-                foreignField: "channel", // subscription collection field
-                as: "subscribers"  
+                from: "subscriptions", // collection name in db  (target collection)
+                localField: "_id", // user collection field in current collection
+                foreignField: "channel", // subscription collection field in target collection
+                as: "subscribers"  // we search the channel in the user documents is it present or not
 
             }
         },
@@ -352,7 +353,7 @@ const getuserchannelprofile = asyncHandler(async(req,res)=>{
               from: "subscriptions", // collection name in db
                 localField: "_id", // user collection field
                 foreignField: "subscriber", // subscription collection field
-                as: "subscribedchannels"   
+                as: "subscribedchannels"   // we find basicaly subcriber person into every channel either he is subscribed or not
             }
         },{
             $addFields:{
@@ -364,7 +365,7 @@ const getuserchannelprofile = asyncHandler(async(req,res)=>{
                 },
                 issubscribed:{
                     $cond:{
-                        if:{ $in:[ "req.user._id","$subscribers.subscriber"]}, // check if the logged in user is in the subscribers array
+                        if:{ $in:[ "req.user._id","$subscribers.subscriber"]}, // check if the req.user  is in the subscribers array of the channel
                         then: true,
                         else: false
                     }
@@ -385,6 +386,60 @@ const getuserchannelprofile = asyncHandler(async(req,res)=>{
             
              }
     ])
+    if(!channel?.length){
+        throw new apierror("channel not found",404)
+    }
+
+    return res.status(200).json(
+        new apiresponse("channel fetched successfully",200,channel[0]))
 })
 
-export { register, loginuser,logoutuser,refreshAcessToken,changepassword ,getcurrentuser,updateuser, avatarupdate,coverimgupdate,getuserchannelprofile}
+const watchistory = asyncHandler(async(req,res)=>{
+    const user = await User.aggregate([
+        {
+            $match:{
+                _id: new mongoose.Types.ObjectId(req.user._id)
+            }
+        },
+        {
+            $lookup:{
+                from: "videos",
+                localField: "watchHistory",
+                foreignField: "_id",
+                as: "watchhistoryvideos",
+                pipeline:[
+                    {
+                        $lookup:{
+                            from: "users",
+                            localField: "owner",
+                            foreignField: "_id",
+                            as: "ownerdetails",
+                            pipeline:[
+                                {
+                                    $project:{
+                                        fullname:1,
+                                        username:1,
+                                        avatar:1,
+
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        $addFields:{
+                            owner:{
+                                $arrayElemAt:["$ownerdetails",0]
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+    ])
+    return res.status(200).json(
+        new apiresponse("watch history fetched successfully",200,user[0].watchhistoryvideos)
+    )
+}
+)
+export { register, loginuser,logoutuser,refreshAcessToken,changepassword ,getcurrentuser,updateuser, avatarupdate,coverimgupdate,getuserchannelprofile, watchistory}
