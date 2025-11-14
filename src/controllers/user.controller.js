@@ -242,7 +242,7 @@ const changepassword = asyncHandler(async(req,res)=>{
 })
 
 const getcurrentuser = asyncHandler(async(req,res)=>{
-    return res.statur(200)
+    return res.status(200)
     .json(
         new apiresponse("current user fetched",200, req.user)
     )

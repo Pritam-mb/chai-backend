@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { loginuser, logoutuser, register,refreshAcessToken,getcurrentuser,changepassword,updateuser,avatarupdate,getuserchannelprofile,watchistory } from "../controllers/user.controller.js";
+import { getAllVideos, publishAVideo } from "../controllers/video.controller.js";
 import { upload} from "../middlewares/multer.middlewire.js"
 import { verifyjwt } from "../middlewares/auth.middlewire.js";
 const router = Router();
@@ -14,6 +15,24 @@ router.route("/register").post(
         }
     ]),
     register)
+
+router
+    .route("upload-video")
+    .post(
+        upload.fields([
+            {
+                name: "videoFile",
+                maxCount: 1,
+            },
+            {
+                name: "thumbnail",
+                maxCount: 1,
+            },
+            
+        ]),
+        verifyjwt, publishAVideo
+    );
+    
 
 router.route("/login").post(loginuser)
 
