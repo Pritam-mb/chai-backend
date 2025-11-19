@@ -3,6 +3,8 @@ import { loginuser, logoutuser, register,refreshAcessToken,getcurrentuser,change
 import { getAllVideos, publishAVideo } from "../controllers/video.controller.js";
 import { upload} from "../middlewares/multer.middlewire.js"
 import { verifyjwt } from "../middlewares/auth.middlewire.js";
+import apicache from "apicache";
+
 const router = Router();
 router.route("/register").post(
     upload.fields([   //middlewire which take avater and coverimage file

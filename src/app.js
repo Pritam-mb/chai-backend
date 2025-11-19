@@ -2,15 +2,23 @@
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import rateLimit from 'express-rate-limit';
+import apicache from 'apicache';
 
-
+const cache = apicache.middleware;
 const app = express({});
 app.use(cors({     
     origin: process.env.CORS_ORIGIN || "http://localhost:3000",
     credentials: true,
 }))
 
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 5,
 
+})
+app.use(limiter); // Apply rate limiting to all requests
+app.set("trust proxy", 1); // trust first proxy
 // To read JSON data sent in requests (like from Postman or frontend), limit size to 16kb
 app.use(express.json({ limit: "16kb" }));
 
@@ -27,7 +35,7 @@ app.use(cookieParser()); // for parsing cookies from request headers
 import userouter from "./routes/user.route.js"
 
 //routes
-app.use("/users",userouter) // when u hit this route it will go to user.route.js
+app.use("/users",cache('2 minutes'),userouter) // when u hit this route it will go to user.route.js
 // then it will go to user.controller.js or register function
 // http://localhost:4000/users/register
 
