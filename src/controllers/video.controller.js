@@ -12,7 +12,7 @@ import apierror from "../utils/apierror.js"
 const getAllVideos = asyncHandler(async (req, res) => {
     const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query
     const pipeline = []
-
+ // any keyword
     if(query){
         pipeline.push({
             $match: {
@@ -23,6 +23,8 @@ const getAllVideos = asyncHandler(async (req, res) => {
             }
         });
     }
+
+    //any specific user videos
     if(!userId){
         throw new apierror("User ID is required",400)
     }

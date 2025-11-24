@@ -51,6 +51,32 @@ const getSubscribedChannels = asyncHandler(async (req, res) => {
         throw new apierror("Invalid subscriber ID",400)
     }
     const channel = await subscription.find({subscriber : subscriberId}).populate("channel","username avatar email fullname ")
+//    const channel = await subscription.aggregate([
+//     {$match:{
+//         subscriber: new mongoose.Types.ObjectId(subscriberId)
+//     }},
+
+//             {
+//                 $lookup:{
+//                     from:"users",
+//                     localField:"channel",
+//                     foreignField:"_id", 
+//                     as:"channelInfo",
+//                     pipeline:[
+//                         {
+//                             $project:{
+//                                 username:1,
+//                                 avatar:1,
+//                                 fullname:1,
+//                                 email:1
+//                             }
+//                         }
+//                     ]
+//                 }
+//             }
+        
+    
+//    ])
     return res.status(200).json(
         new ApiResponse("Subscribed channels fetched successfully",200,channel)
     )
